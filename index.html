@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Translator Widget</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .widget-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .widget-header {
+            background: #4285f4;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .url-display {
+            flex-grow: 1;
+            margin: 0 15px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        
+        .url-display:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .translate-btn {
+            background: #34a853;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-left: 10px;
+        }
+        
+        .translate-btn:hover {
+            background: #2d8e47;
+        }
+        
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #333;
+            z-index: 100;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4285f4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <div class="url-display" id="current-url">https://example.com</div>
+            <button class="translate-btn" id="translate-btn">Translate to French</button>
+        </div>
+        <div class="iframe-container">
+            <iframe id="website-frame" src="https://example.com"></iframe>
+            <div class="loading-overlay" id="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <div id="loading-text">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const frame = document.getElementById('website-frame');
+            const translateBtn = document.getElementById('translate-btn');
+            const urlDisplay = document.getElementById('current-url');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const loadingText = document.getElementById('loading-text');
+            
+            let isTranslated = false;
+            let currentUrl = 'https://example.com';
+            
+            // Function to show loading state
+            function showLoading(message) {
+                loadingText.textContent = message;
+                loadingIndicator.style.display = 'flex';
+            }
+            
+            // Function to hide loading state
+            function hideLoading() {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Function to load a URL in the iframe
+            function loadUrl(url, isTranslation = false) {
+                currentUrl = url;
+                urlDisplay.textContent = url;
+                showLoading(isTranslation ? 'Translating to French...' : 'Loading website...');
+                
+                frame.onload = function() {
+                    hideLoading();
+                };
+                
+                frame.src = url;
+            }
+            
+            // Function to translate the page
+            function toggleTranslation() {
+                if (!isTranslated) {
+                    // Translate to French using Google Translate
+                    const translatedUrl = `https://translate.google.com/translate?hl=fr&sl=auto&tl=fr&u=${encodeURIComponent(currentUrl)}`;
+                    loadUrl(translatedUrl, true);
+                    isTranslated = true;
+                    translateBtn.textContent = 'Show Original';
+                } else {
+                    // Revert to original URL
+                    loadUrl(currentUrl);
+                    isTranslated = false;
+                    translateBtn.textContent = 'Translate to French';
+                }
+            }
+            
+            // Function to change the website URL
+            function changeUrl() {
+                const newUrl = prompt('Enter website URL:', currentUrl);
+                if (newUrl && newUrl !== currentUrl) {
+                    // Reset translation state when URL changes
+                    isTranslated = false;
+                    translateBtn.textContent = 'Translate to French';
+                    
+                    // Add https:// if not present
+                    let formattedUrl = newUrl;
+                    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+                        formattedUrl = 'https://' + formattedUrl;
+                    }
+                    
+                    loadUrl(formattedUrl);
+                }
+            }
+            
+            // Event listeners
+            translateBtn.addEventListener('click', toggleTranslation);
+            urlDisplay.addEventListener('click', changeUrl);
+            
+            // Handle iframe loading errors
+            frame.addEventListener('error', function() {
+                hideLoading();
+                alert('Failed to load the website. Please check the URL and try again.');
+            });
+        });
+    </script>
+</body>
+</html>
